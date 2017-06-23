@@ -34,6 +34,17 @@ def generate_data():
     
     return X, y
 
+#for sigmoid function
+def sigmoid(z):
+    s = 1.0 / (1.0 + np.exp(-1.0*z))
+    return s
+
+#for derivative of sigmoid function
+def sigmoid_deravative(a1):
+    a1 = a1 * (1 - a1)
+    return a1
+
+
 
 def visualize(X, y, model):
     # plt.scatter(X[:, 0], X[:, 1], s=40, c=y, cmap=plt.cm.Spectral)
@@ -64,7 +75,7 @@ def calculate_loss(model, X, y):
     W1, b1, W2, b2 = model['W1'], model['b1'], model['W2'], model['b2']
     # Forward propagation to calculate our predictions
     z1 = X.dot(W1) + b1
-    a1 = np.tanh(z1)
+    a1 = sigmoid(z1)
     z2 = a1.dot(W2) + b2
     exp_scores = np.exp(z2)
     probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
@@ -80,7 +91,7 @@ def predict(model, x):
     W1, b1, W2, b2 = model['W1'], model['b1'], model['W2'], model['b2']
     # Forward propagation
     z1 = x.dot(W1) + b1
-    a1 = np.tanh(z1)
+    a1 = sigmoid(z1)
     z2 = a1.dot(W2) + b2
     exp_scores = np.exp(z2)
     probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
@@ -108,12 +119,9 @@ def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False):
 
         # Forward propagation
         z1 = X.dot(W1) + b1
-        a1 = np.tanh(z1)
+        a1 = sigmoid(z1)
         z2 = a1.dot(W2) + b2
-        # ignoring floating overflow
-        np.seterr(over= 'ignore', invalid='ignore')
         exp_scores = np.exp(z2)
-        np.seterr(divide='ignore', invalid='ignore')
         probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
         # Backpropagation
@@ -121,7 +129,8 @@ def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False):
         delta3[range(num_examples), y] -= 1
         dW2 = (a1.T).dot(delta3)
         db2 = np.sum(delta3, axis=0, keepdims=True)
-        delta2 = delta3.dot(W2.T) * (1 - np.power(a1, 2))
+        derivative = np.vectorize(sigmoid_deravative)
+        delta2 = delta3.dot(W2.T)*derivative(a1)
         dW1 = np.dot(X.T, delta2)
         db1 = np.sum(delta2, axis=0)
 
